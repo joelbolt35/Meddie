@@ -3,13 +3,13 @@
     <b-button id="newMedButton" v-b-modal.my-modal>+ Add New Medication</b-button>
 
     <!-- The modal -->
-    <b-modal 
-    id="my-modal"
-    ref="modal"
-    title="Add Your Medication"
-    @show="resetModal"
-    @hidden="resetModal"
-    @ok="handleOk"
+    <b-modal
+      id="my-modal"
+      ref="modal"
+      title="Add Your Medication"
+      @show="resetModal"
+      @hidden="resetModal"
+      @ok="handleOk"
     >
       <form ref="form" @submit.stop.prevent="handleSubmit">
         <!-- Drug -->
@@ -24,8 +24,13 @@
             placeholder="Drug name"
             v-model="drug"
             :state="drugState"
+            list="my-list-id"
             required
           ></b-form-input>
+          <h4>Recommendations:</h4>
+          <ul>
+            <li v-for="(rxterm, index) in rxterms" :key="`${index}`">{{ rxterm }}</li>
+          </ul>
         </b-form-group>
 
         <!-- Strength -->
@@ -51,7 +56,11 @@
       Submitted Drugs:
       <div v-if="medications.length === 0">--</div>
       <ul v-else class="mb-0 pl-3">
-        <li v-for="medication in medications" :key="medication.drug" :id="medication.drug">{{ medication }}</li>
+        <li
+          v-for="medication in medications"
+          :key="medication.drug"
+          :id="medication.drug"
+        >{{ medication }}</li>
       </ul>
     </div>
     <!-- End Test Output -->
@@ -61,62 +70,81 @@
 </template>
 
 <script>
-import Medication from '~/components/Medication'
-
+import Medication from "~/components/Medication";
+import axios from "axios"
 export default {
   components: {
     Medication
   },
   data() {
     return {
-      drug: '',
-      strength: '',
+      drug: "",
+      strength: "",
       drugState: null,
       strengthState: null,
-      medications: []
+      medications: [],
+      rxterms: []
     };
   },
+
+  watch: {
+    drug: async function() {
+      if (this.drug.length == 0) {
+        this.rxterms = [];
+        return;
+      };
+
+      try {
+        const response = await axios.get(`https://clinicaltables.nlm.nih.gov/api/rxterms/v3/search?terms=${this.drug}`);
+        this.rxterms = response.data[1]
+        console.log(response.data[1]);
+      } catch (error) {
+        console.error(error);
+      }
+    }
+  },
+
   methods: {
     // This checks to see if the whole form is valid
     checkFormState() {
-        const valid = this.$refs.form.checkValidity()
-        this.drugState = (this.drug !== '') ? 'valid' : 'invalid'
-        this.strengthState = (this.strength !== '') ? 'valid' : 'invalid'
-        return valid
-      },
+      const valid = this.$refs.form.checkValidity();
+      this.drugState = this.drug !== "" ? "valid" : "invalid";
+      this.strengthState = this.strength !== "" ? "valid" : "invalid";
+      return valid;
+    },
 
     //Clears the modal fields
     resetModal() {
-      this.drug = ''
-      this.strength = ''
-      this.drugState = null
-      this.strengthState = null
+      this.drug = "";
+      this.strength = "";
+      this.drugState = null;
+      this.strengthState = null;
     },
 
     //Submit event
     handleOk(bvModalEvt) {
       // Prevent modal from closing
-      bvModalEvt.preventDefault()
+      bvModalEvt.preventDefault();
       // Trigger submit handler
-      this.handleSubmit()
+      this.handleSubmit();
     },
-    
+
     handleSubmit() {
       // Exit when the form isn't valid
       if (!this.checkFormState()) {
-        return
+        return;
       }
       // Push the Medications information
-      
-      this.medications.push(this.drug)
-      this.medications.push(this.strength)
+
+      this.medications.push(this.drug);
+      this.medications.push(this.strength);
       // Hide the modal manually
       this.$nextTick(() => {
-        this.$refs.modal.hide()
-      })
+        this.$refs.modal.hide();
+      });
     }
   }
-}
+};
 </script>
 
 <style>
