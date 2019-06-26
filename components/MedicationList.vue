@@ -14,23 +14,27 @@
       <form ref="form" @submit.stop.prevent="handleSubmit">
         <!-- Drug -->
         <b-form-group
-          :state="drugState"
           label="Drug"
           label-for="drug-input"
-          invalid-feedback="Drug is required"
         >
           <b-form-input
             id="drug-input"
-            placeholder="Drug name"
+            placeholder="Search Drug Name"
             v-model="drug"
-            :state="drugState"
             list="my-list-id"
-            required
           ></b-form-input>
-          <h4>Recommendations:</h4>
-          <ul>
+          <!-- <ul>
             <li v-for="(rxterm, index) in rxterms" :key="`${index}`">{{ rxterm }}</li>
-          </ul>
+          </ul> -->
+        </b-form-group>
+        <b-form-group :label="`Select Medication (Selected: ${selected})`">
+          <b-form-radio 
+            v-model="selected" 
+            name="some-radios" 
+            v-for="(rxterm, index) in rxterms" 
+            :key="`${index}`"
+            :value="`${rxterm}`"
+            > {{ rxterm }} </b-form-radio>
         </b-form-group>
 
         <!-- Strength -->
@@ -72,12 +76,15 @@
 <script>
 import Medication from "~/components/Medication";
 import axios from "axios"
+
+
 export default {
   components: {
     Medication
   },
   data() {
     return {
+      selected: '',
       drug: "",
       strength: "",
       drugState: null,
@@ -108,7 +115,7 @@ export default {
     // This checks to see if the whole form is valid
     checkFormState() {
       const valid = this.$refs.form.checkValidity();
-      this.drugState = this.drug !== "" ? "valid" : "invalid";
+      // this.drugState = this.drug !== "" ? "valid" : "invalid";
       this.strengthState = this.strength !== "" ? "valid" : "invalid";
       return valid;
     },
@@ -136,7 +143,7 @@ export default {
       }
       // Push the Medications information
 
-      this.medications.push(this.drug);
+      this.medications.push(this.selected);
       this.medications.push(this.strength);
       // Hide the modal manually
       this.$nextTick(() => {
